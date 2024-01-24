@@ -14,7 +14,7 @@ class MainApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
             colorScheme: const ColorScheme.light(
-                primary: Colors.purple,
+                primary: Colors.purple,   
                 secondary: Colors.amber),
             scaffoldBackgroundColor: Colors.purple[50],
             elevatedButtonTheme: ElevatedButtonThemeData(

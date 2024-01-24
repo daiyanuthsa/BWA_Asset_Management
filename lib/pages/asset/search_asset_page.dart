@@ -3,31 +3,36 @@ import 'dart:convert';
 import 'package:bwa_asset_management/config/app_constant.dart';
 import 'package:bwa_asset_management/models/asset_model.dart';
 
-import 'package:bwa_asset_management/pages/asset/create_asset_page.dart';
-import 'package:bwa_asset_management/pages/asset/search_asset_page.dart';
 import 'package:bwa_asset_management/pages/asset/update_asset_page.dart';
-import 'package:bwa_asset_management/pages/user/pages_login.dart';
 import 'package:d_info/d_info.dart';
 import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class SearchPage extends StatefulWidget {
+  const SearchPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<SearchPage> createState() => _SearchPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _SearchPageState extends State<SearchPage> {
   List<AssetModel> assets = [];
 
-  readAssets() async {
+  final edtSearch = TextEditingController();
+
+  searchAssets() async {
+    if (edtSearch.text.isEmpty) {
+      DMethod.printBasic('APAKEK');
+      return;
+    }
     assets.clear();
     setState(() {});
     try {
-      Uri url = Uri.parse('${AppConstant.baseUrl}/asset/read.php');
-      final response = await http.get(url);
+      Uri url = Uri.parse('${AppConstant.baseUrl}/asset/search.php');
+      final response = await http.post(url, body: {
+        'search' : edtSearch.text
+      });
 
       DMethod.printResponse(response);
 
@@ -63,7 +68,7 @@ class _HomePageState extends State<HomePage> {
                         builder: (context) => UpdateAssetPage(
                           oldaAsset: item,
                         ),
-                      )).then((value) => readAssets());
+                      )).then((value) => searchAssets());
                 },
                 leading: const Icon(
                   Icons.edit,
@@ -106,7 +111,7 @@ class _HomePageState extends State<HomePage> {
 
         if (deleteStatus) {
           DInfo.toastSuccess('Success delete asset');
-          readAssets(); // Atau navigasi ke halaman lain setelah penghapusan sukses
+          searchAssets(); // Atau navigasi ke halaman lain setelah penghapusan sukses
         } else {
           DInfo.toastError('Failed delete asset');
         }
@@ -118,53 +123,33 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void initState() {
-    // TODO: implement initState
-    readAssets();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Our Asset'),
+        titleSpacing: 0,
+        title: Container(
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.purple[100],
+            borderRadius: BorderRadius.circular(24),
+          ),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: TextField(
+            controller: edtSearch,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              hintText: 'Search here...',
+              isDense: true,
+            ),
+          ),
+        ),
         foregroundColor: Colors.white,
         centerTitle: true,
         backgroundColor: Colors.purple,
         actions: [IconButton(onPressed: () {
-          Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SearchPage(),
-                    )).then((value) => readAssets());
+          searchAssets();
         }, icon: const Icon(Icons.search))],
-      ),
-      drawer: Drawer(
-        child: ListView(
-          children: [
-            ListTile(
-              title: const Text('Logout'),
-              onTap: () {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LoginPage(),
-                    ));
-              },
-            )
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const CreateAssetPage(),
-              )).then((value) => readAssets());
-        },
-        child: const Icon(Icons.add),
       ),
       body: assets.isEmpty
           ? Center(
@@ -173,10 +158,10 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     const Text('Empty'),
                     IconButton(
-                        onPressed:() {readAssets();
-                        setState(() {
-                          
-                        });},
+                        onPressed: () {
+                          searchAssets();
+                          setState(() {});
+                        },
                         icon: const Icon(
                           Icons.refresh,
                           color: Colors.purple,
@@ -184,7 +169,7 @@ class _HomePageState extends State<HomePage> {
                   ]),
             )
           : RefreshIndicator(
-              onRefresh: () async => readAssets(),
+              onRefresh: () async => searchAssets(),
               child: GridView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                 itemCount: assets.length,
